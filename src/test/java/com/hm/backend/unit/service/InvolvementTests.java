@@ -1,5 +1,6 @@
 package com.hm.backend.unit.service;
 
+import com.hm.backend.Utils;
 import com.hm.backend.dao.Involvement;
 import com.hm.backend.dao.Sector;
 import com.hm.backend.dto.InvolvementDto;
@@ -40,8 +41,6 @@ public class InvolvementTests {
     @Mock
     ValidationService validationService;
 
-    Sector rootSector, branchSector, leafSector;
-
     @Test
     public void whenGetMethodCalled_thenRepositoryMethodFindByIdCalled() throws IncorrectFormDataException {
         Involvement involvement = new Involvement("Max", true, new ArrayList<>());
@@ -68,7 +67,7 @@ public class InvolvementTests {
 
     @Test
     public void whenCreateMethodCalled_thenRepositoryMethodSaveCalled() throws IncorrectFormDataException {
-        reloadSectors();
+        Sector leafSector = Utils.getLeafSector();
 
         Involvement involvement = new Involvement("Max", true, Arrays.asList(leafSector));
         doReturn(involvement).when(involvementRepo).save(any(Involvement.class));
@@ -88,8 +87,6 @@ public class InvolvementTests {
 
     @Test
     public void whenCreateMethodCalledValidationOfInvolvementDtoFails_thenThrowException() throws IncorrectFormDataException {
-        reloadSectors();
-
         InvolvementDto involvementDto = new InvolvementDto("Max", true, Arrays.asList(3L));
         doThrow(new IncorrectFormDataException("incorrect")).when(validationService).validate(any(InvolvementDto.class));
 
@@ -105,7 +102,7 @@ public class InvolvementTests {
 
     @Test
     public void whenCreateMethodCalledValidationOfSectorsIdsFails_thenThrowException() throws IncorrectFormDataException {
-        reloadSectors();
+        Sector leafSector = Utils.getLeafSector();
 
         InvolvementDto involvementDto = new InvolvementDto("Max", true, Arrays.asList(3L));
         doNothing().when(validationService).validate(any(InvolvementDto.class));
@@ -124,7 +121,7 @@ public class InvolvementTests {
 
     @Test
     public void whenUpdateMethodCalled_thenRepositoryMethodSaveCalled() throws IncorrectFormDataException {
-        reloadSectors();
+        Sector leafSector = Utils.getLeafSector();
 
         Involvement involvement = new Involvement(9L, "Max", true, Arrays.asList(leafSector));
         doReturn(Optional.of(involvement)).when(involvementRepo).findById(eq(9L));
@@ -143,8 +140,6 @@ public class InvolvementTests {
 
     @Test
     public void whenUpdateMethodCalledAndInvolvementRepoReturnedOptionalNull_thenThrownException() {
-        reloadSectors();
-
         InvolvementDto involvementDto = new InvolvementDto("Max", true, Arrays.asList(3L));
         doReturn(Optional.ofNullable(null)).when(involvementRepo).findById(eq(9L));
 
@@ -158,7 +153,7 @@ public class InvolvementTests {
 
     @Test
     public void whenUpdateMethodCalledAndSectorValidationFailed_thenThrownException() throws IncorrectFormDataException {
-        reloadSectors();
+        Sector leafSector = Utils.getLeafSector();
 
         Involvement involvement = new Involvement(9L,"Max", true, Arrays.asList(leafSector));
         doReturn(Optional.of(involvement)).when(involvementRepo).findById(eq(9L));
@@ -174,13 +169,5 @@ public class InvolvementTests {
 
         verify(involvementRepo).findById(9L);
         verify(validationService).validate(anyList());
-    }
-
-    private void reloadSectors() {
-        rootSector = new Sector(1L, "Air", null, null);
-        branchSector = new Sector(2L, "Air", rootSector, null);
-        leafSector = new Sector(3L, "Air", branchSector, new ArrayList<>());
-        rootSector.setChildren(Arrays.asList(branchSector));
-        branchSector.setChildren(Arrays.asList(leafSector));
     }
 }
